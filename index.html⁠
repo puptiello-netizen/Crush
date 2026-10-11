@@ -1,0 +1,289 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Crush Burger</title>
+    
+    <!-- Configurazioni App per iPhone (iOS) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Crush Burger">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/ff5722/white?text=CB">
+    
+    <!-- Configurazioni App per Android (Manifest integrato) -->
+    <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Crush%20Burger%22%2C%22short_name%22%3A%22Crush%22%2C%22display%22%3A%22standalone%22%2C%22theme_color%22%3A%22%23ff5722%22%2C%22background_color%22%3A%22%23f9fafb%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fplacehold.co%2F192x192%2Fff5722%2Fwhite%3Ftext%3DCB%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D'>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f9fafb; padding-top: 60px;}
+        .brand-color { color: #ff5722; }
+        .bg-brand { background-color: #ff5722; }
+        .bg-brand:hover { background-color: #e64a19; }
+        .cart-open { transform: translateX(0%); }
+        .cart-closed { transform: translateX(100%); }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Navigazione -->
+    <nav class="fixed top-0 w-full bg-white shadow-md z-40 h-16 flex items-center justify-between px-4">
+        <div class="text-2xl font-bold brand-color flex items-center gap-2">
+            🍔 Crush Burger
+        </div>
+        <div class="flex gap-4">
+            <a href="#menu" class="font-semibold text-gray-700 hover:text-orange-500">Menu</a>
+            <button onclick="toggleCart()" class="relative text-gray-700 hover:text-orange-500 font-semibold">
+                🛒 Carrello
+                <span id="cart-count" class="absolute -top-2 -right-3 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Intestazione -->
+    <header class="text-center py-12 px-4 bg-gray-50">
+        <h1 class="text-4xl md:text-5xl font-extrabold mb-4">Il VERO Burger di Battipaglia</h1>
+        <p class="text-lg text-gray-600 mb-6">Carne fresca, ingredienti premium, esplosione di gusto.</p>
+    </header>
+
+    <!-- Sezione Menu -->
+    <main id="menu" class="max-w-4xl mx-auto p-4 mb-24">
+        <h2 class="text-3xl font-bold text-center mb-8 border-b-2 border-orange-500 pb-2 inline-block">Il Nostro Menu</h2>
+        <div id="menu-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- I prodotti verranno caricati qui -->
+        </div>
+    </main>
+
+    <!-- Carrello (Sidebar) -->
+    <div id="cart-sidebar" class="fixed top-0 right-0 h-full w-full md:w-96 bg-white shadow-2xl z-50 transition-transform duration-300 cart-closed flex flex-col">
+        <div class="p-4 bg-brand text-white flex justify-between items-center h-16">
+            <h2 class="text-xl font-bold">Il tuo Ordine</h2>
+            <button onclick="toggleCart()" class="text-white text-2xl font-bold">&times;</button>
+        </div>
+        
+        <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <p class="text-gray-500 text-center mt-10">Il carrello è vuoto.</p>
+        </div>
+
+        <div class="p-4 border-t bg-gray-50">
+            <div class="flex justify-between font-bold text-xl mb-4">
+                <span>Totale:</span>
+                <span id="cart-total">0.00</span>
+            </div>
+            <button onclick="openCheckout()" class="w-full bg-brand text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition">
+                Vai alla Cassa
+            </button>
+        </div>
+    </div>
+
+    <!-- Modulo Checkout -->
+    <div id="checkout-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
+            <h2 class="text-2xl font-bold mb-4">Dettagli Consegna</h2>
+            <form id="checkout-form" onsubmit="processOrder(event)">
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-1">Nome e Cognome</label>
+                    <input type="text" id="cust-name" required class="w-full border p-2 rounded focus:outline-none focus:border-orange-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-1">Indirizzo di Consegna (Battipaglia)</label>
+                    <input type="text" id="cust-address" required class="w-full border p-2 rounded focus:outline-none focus:border-orange-500">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-bold mb-1">Telefono</label>
+                    <input type="tel" id="cust-phone" required class="w-full border p-2 rounded focus:outline-none focus:border-orange-500">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-sm font-bold mb-1">Metodo di Pagamento</label>
+                    <select id="cust-payment" class="w-full border p-2 rounded focus:outline-none focus:border-orange-500">
+                        <option value="Contanti">Contanti alla consegna</option>
+                        <option value="Carta/Pos">Carta/Bancomat alla consegna</option>
+                    </select>
+                </div>
+                
+                <div id="order-actions" class="flex gap-2">
+                    <button type="button" onclick="closeCheckout()" class="flex-1 bg-gray-300 text-gray-800 font-bold py-3 rounded-lg">Annulla</button>
+                    <button type="submit" class="flex-1 bg-brand text-white font-bold py-3 rounded-lg hover:bg-orange-600">Conferma</button>
+                </div>
+                
+                <div id="whatsapp-btn-container" class="hidden mt-4">
+                    <a id="whatsapp-link" href="#" target="_blank" class="block w-full bg-green-500 text-white text-center font-bold py-3 rounded-lg hover:bg-green-600 transition">
+                        Invia Ordine su WhatsApp
+                    </a>
+                    <p class="text-xs text-center text-gray-500 mt-2">Clicca il pulsante verde per inviare i dettagli al ristorante tramite WhatsApp.</p>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white text-center p-6 mt-12">
+        <p class="font-bold text-lg mb-2">Crush Burger Battipaglia</p>
+        <p class="text-gray-400 text-sm">Realizzato per i veri amanti dell'hamburger.</p>
+    </footer>
+
+    <!-- Logica dell'App -->
+    <script>
+        const menuData = [
+            { id: 1, name: "Crush", price: 8.50, desc: "Bun artigianale, doppio smash burger 200g, cheddar, bacon croccante, insalata, pomodoro, salsa crush" },
+            { id: 2, name: "Bacon King", price: 9.00, desc: "Bun artigianale, doppio smash burger 200g, quadruplo bacon croccante, doppio cheddar, salsa bbq, maionese" },
+            { id: 3, name: "Pistacchioso", price: 10.00, desc: "Bun artigianale, doppio smash burger 200g, stracciatella di bufala, mortadella IGP, granella di pistacchio, pesto di pistacchio" },
+            { id: 4, name: "Truffle Burger", price: 9.50, desc: "Bun artigianale, doppio smash burger 200g, provola affumicata, funghi porcini, maionese al tartufo" },
+            { id: 5, name: "Patatine Fritte", price: 3.50, desc: "Porzione abbondante di patatine a pasta gialla fritte dorate" },
+            { id: 6, name: "Onion Rings", price: 4.00, desc: "Anelli di cipolla pastellati e fritti (8 pezzi) con salsa a scelta" },
+            { id: 7, name: "Coca Cola", price: 2.50, desc: "Lattina 33cl ghiacciata" },
+            { id: 8, name: "Acqua Naturale", price: 1.50, desc: "Bottiglietta 50cl" }
+        ];
+
+        let cart = [];
+
+        function renderMenu() {
+            const container = document.getElementById('menu-container');
+            container.innerHTML = '';
+            
+            menuData.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-xl shadow border border-gray-100 flex flex-col justify-between";
+                
+                card.innerHTML = `
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-xl font-bold">${item.name}</h3>
+                            <span class="font-bold text-orange-600">${item.price.toFixed(2)}</span>
+                        </div>
+                        <p class="text-sm text-gray-500 mb-4 leading-snug">${item.desc}</p>
+                    </div>
+                    <button onclick="addToCart(${item.id})" class="w-full bg-gray-100 text-gray-800 font-semibold py-2 rounded hover:bg-orange-100 hover:text-orange-600 transition border border-gray-200">
+                        Aggiungi
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function addToCart(id) {
+            const product = menuData.find(p => p.id === id);
+            const existingItem = cart.find(item => item.id === id);
+            
+            if (existingItem) {
+                existingItem.qty++;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            
+            updateCartUI();
+            
+            // Effetto visivo bottone carrello
+            const cartBtn = document.getElementById('cart-count');
+            cartBtn.classList.add('scale-150');
+            setTimeout(() => cartBtn.classList.remove('scale-150'), 200);
+        }
+
+        function updateCartUI() {
+            const cartItemsContainer = document.getElementById('cart-items');
+            const cartCount = document.getElementById('cart-count');
+            const cartTotal = document.getElementById('cart-total');
+            
+            cartItemsContainer.innerHTML = '';
+            let total = 0;
+            let count = 0;
+
+            if (cart.length === 0) {
+                cartItemsContainer.innerHTML = '<p class="text-gray-500 text-center mt-10">Il carrello è vuoto.</p>';
+            } else {
+                cart.forEach(item => {
+                    total += item.price * item.qty;
+                    count += item.qty;
+                    
+                    const el = document.createElement('div');
+                    el.className = "flex justify-between items-center border-b pb-2";
+                    el.innerHTML = `
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm">${item.name}</h4>
+                            <div class="text-xs text-gray-500">${item.price.toFixed(2)} x ${item.qty}</div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold">${(item.price * item.qty).toFixed(2)}</span>
+                            <button onclick="removeFromCart(${item.id})" class="text-red-500 font-bold px-2 py-1 bg-red-50 rounded hover:bg-red-100">X</button>
+                        </div>
+                    `;
+                    cartItemsContainer.appendChild(el);
+                });
+            }
+
+            cartCount.innerText = count;
+            cartTotal.innerText = total.toFixed(2);
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCartUI();
+        }
+
+        function toggleCart() {
+            const sidebar = document.getElementById('cart-sidebar');
+            if (sidebar.classList.contains('cart-closed')) {
+                sidebar.classList.remove('cart-closed');
+                sidebar.classList.add('cart-open');
+            } else {
+                sidebar.classList.remove('cart-open');
+                sidebar.classList.add('cart-closed');
+            }
+        }
+
+        function openCheckout() {
+            if (cart.length === 0) {
+                alert("Il carrello è vuoto!");
+                return;
+            }
+            toggleCart();
+            document.getElementById('checkout-modal').classList.remove('hidden');
+            document.getElementById('order-actions').classList.remove('hidden');
+            document.getElementById('whatsapp-btn-container').classList.add('hidden');
+        }
+
+        function closeCheckout() {
+            document.getElementById('checkout-modal').classList.add('hidden');
+        }
+
+        function processOrder(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('cust-name').value;
+            const address = document.getElementById('cust-address').value;
+            const phone = document.getElementById('cust-phone').value;
+            const payment = document.getElementById('cust-payment').value;
+            
+            let orderText = "NUOVO ORDINE - CRUSH BURGER\n\n";
+            orderText += "CLIENTE:\n";
+            orderText += "Nome: " + name + "\n";
+            orderText += "Indirizzo: " + address + "\n";
+            orderText += "Telefono: " + phone + "\n\n";
+            
+            orderText += "ORDINE:\n";
+            let total = 0;
+            cart.forEach(item => {
+                orderText += "- " + item.qty + "x " + item.name + " (" + (item.price * item.qty).toFixed(2) + ")\n";
+                total += item.price * item.qty;
+            });
+            
+            orderText += "\nTOTALE: " + total.toFixed(2) + "\n";
+            orderText += "PAGAMENTO: " + payment;
+            
+            const numeroWhatsApp = "393313412433";
+            const urlEncodedText = encodeURIComponent(orderText);
+            
+            const whatsappUrl = "https://api.whatsapp.com/send/?phone=" + numeroWhatsApp + "&text=" + urlEncodedText + "&type=phone_number&app_absent=0";
+            
+            document.getElementById('order-actions').classList.add('hidden');
+            document.getElementById('whatsapp-btn-container').classList.remove('hidden');
+            document.getElementById('whatsapp-link').href = whatsappUrl;
+        }
+
+        // Inizializza
+        renderMenu();
+    </script>
+</body>
+</html>
